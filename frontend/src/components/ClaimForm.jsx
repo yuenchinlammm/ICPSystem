@@ -29,6 +29,24 @@ export default function ClaimForm({ mode }) {
     }
   }, [mode, id]);
 
+  // Minimal client-side checks to show messages
+  const POLICY_RE = /^[A-Za-z0-9-]{6,20}$/;
+
+  function validateClaim(form) {
+    const e = {};
+    if (!POLICY_RE.test(form.policyNumber)) e.policyNumber = '6–20 letters/digits/-';
+    if (!form.incidentDate || new Date(form.incidentDate) > new Date()) e.incidentDate = 'No future dates';
+    if (!TYPES.includes(form.claimType)) e.claimType = 'Select a valid type';
+    if (!form.description || form.description.trim().length < 10 || form.description.length > 1000)
+      e.description = '10–1000 chars';
+    return e;
+  }
+
+  // In your onSubmit handler:
+  const errors = validateClaim(form);
+  setErrors(errors);
+  if (Object.keys(errors).length) return; // block submit until valid
+
   const onChange = e => setForm({ ...form, [e.target.name]: e.target.value });
 
   const onSubmit = async (e) => {

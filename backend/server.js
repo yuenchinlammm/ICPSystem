@@ -12,6 +12,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use('/api/auth', require('./routes/authRoutes'));
+app.get('/health', (req, res) => res.json({ ok: true }));
+app.use('/api/claims', require('./routes/claim.routes'));
+app.use('/api',        require('./routes/document.routes'));
 //app.use('/api/tasks', require('./routes/taskRoutes'));
 
 // Export the app object for testing

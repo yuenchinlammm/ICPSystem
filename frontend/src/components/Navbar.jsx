@@ -34,6 +34,7 @@ const Navbar = () => {
             >
               Register
             </Link>
+            <Link to="/claims/new">New Claim</Link>
           </>
         )}
       </div>
