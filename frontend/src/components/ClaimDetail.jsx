@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { submitClaim } from "../../api/claim";
+import DocumentUpload from "./DocumentUpload";
+import DocumentList from "./DocumentList";
 
 export default function ClaimDetail({ claimId, onBack }) {
   const [claim, setClaim] = useState(null);
@@ -34,6 +36,11 @@ export default function ClaimDetail({ claimId, onBack }) {
       <p><b>Incident Date:</b> {claim.incidentDate?.slice(0,10)}</p>
       <p><b>Status:</b> {claim.status}</p>
       <p><b>Description:</b> {claim.description}</p>
+      <h5 className="mt-4">Documents</h5>
+      <DocumentUpload claimId={claim._id} onUploaded={() => {/* optional refresh below */}} />
+      <div className="mt-2">
+        <DocumentList claimId={claim._id} onChanged={() => {/* optional refresh */}} />
+      </div>
        {claim.status === 'Draft' && (
         <button
           className="btn btn-success"
