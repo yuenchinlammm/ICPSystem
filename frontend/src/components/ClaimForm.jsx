@@ -1,98 +1,71 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { createClaim, getClaim, updateClaim } from '../api/claims';
+import { useState } from "react";
 
-const TYPES = ['Motor','Home','Health','Other'];
+const POLICY_RE = /^[A-Za-z0-9-]{6,20}$/;
+const CLAIM_TYPES = ["Motor", "Home", "Health", "Other"];
 
-export default function ClaimForm({ mode }) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+export default function ClaimForm({ initial = {}, onSubmit, submitting = false }) {
   const [form, setForm] = useState({
-    policyNumber: '', incidentDate: '', claimType: 'Motor', description: '', status: 'Draft'
+    policyNumber: initial.policyNumber || "",
+    incidentDate: initial.incidentDate || "",
+    claimType: initial.claimType || "",
+    description: initial.description || "",
   });
-  const [loading, setLoading] = useState(mode === 'edit');
+  const [errors, setErrors] = useState({});
 
-  useEffect(() => {
-    if (mode === 'edit' && id) {
-      (async () => {
-        try {
-          const data = await getClaim(id);
-          setForm({
-            policyNumber: data.policyNumber,
-            incidentDate: data.incidentDate?.slice(0,10),
-            claimType: data.claimType,
-            description: data.description,
-            status: data.status
-          });
-        } finally { setLoading(false); }
-      })();
-    }
-  }, [mode, id]);
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
-  // Minimal client-side checks to show messages
-  const POLICY_RE = /^[A-Za-z0-9-]{6,20}$/;
-
-  function validateClaim(form) {
+  const validate = () => {
     const e = {};
-    if (!POLICY_RE.test(form.policyNumber)) e.policyNumber = '6–20 letters/digits/-';
-    if (!form.incidentDate || new Date(form.incidentDate) > new Date()) e.incidentDate = 'No future dates';
-    if (!TYPES.includes(form.claimType)) e.claimType = 'Select a valid type';
-    if (!form.description || form.description.trim().length < 10 || form.description.length > 1000)
-      e.description = '10–1000 chars';
-    return e;
-  }
-
-  // In your onSubmit handler:
-  const errors = validateClaim(form);
-  setErrors(errors);
-  if (Object.keys(errors).length) return; // block submit until valid
-
-  const onChange = e => setForm({ ...form, [e.target.name]: e.target.value });
-
-  const onSubmit = async (e) => {
-    e.preventDefault();
-    if (mode === 'create') {
-      const created = await createClaim(form);
-      navigate(`/claims/${created._id}`);
-    } else {
-      await updateClaim(id, form);
-      navigate(`/claims/${id}`);
-    }
+    if (!POLICY_RE.test(form.policyNumber)) e.policyNumber = "6–20 letters/digits/-";
+    if (!form.incidentDate || new Date(form.incidentDate) > new Date())
+      e.incidentDate = "No future dates";
+    if (!CLAIM_TYPES.includes(form.claimType)) e.claimType = "Select a valid type";
+    const len = (form.description || "").trim().length;
+    if (len < 10 || len > 1000) e.description = "10–1000 chars";
+    setErrors(e);
+    return Object.keys(e).length === 0;
   };
 
-  if (loading) return <div style={{padding:24}}>Loading…</div>;
+  const submit = (ev) => {
+    ev.preventDefault();
+    if (!validate()) return;
+    onSubmit?.(form);
+  };
 
   return (
-    <div style={{padding:24, maxWidth:640}}>
-      <h2>{mode === 'create' ? 'New Claim' : 'Edit Claim'}</h2>
-      <form onSubmit={onSubmit}>
-        <label>Policy Number
-          <input name="policyNumber" value={form.policyNumber} onChange={onChange} required />
-        </label><br/>
-        <label>Incident Date
-          <input type="date" name="incidentDate" value={form.incidentDate} onChange={onChange} required />
-        </label><br/>
-        <label>Claim Type
-          <select name="claimType" value={form.claimType} onChange={onChange}>
-            {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
-        </label><br/>
-        <label>Description
-          <textarea name="description" value={form.description} onChange={onChange} required rows={4}/>
-        </label><br/>
-        {/* Status field optional during edit */}
-        {mode === 'edit' && (
-          <label>Status
-            <select name="status" value={form.status} onChange={onChange}>
-              {['Draft','Pending','Under Review','Approved','Rejected'].map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </label>
-        )}
-        <div style={{marginTop:12}}>
-          <button type="submit">{mode === 'create' ? 'Create' : 'Save'}</button>
-          <button type="button" onClick={() => navigate(-1)} style={{marginLeft:8}}>Cancel</button>
-        </div>
-      </form>
-    </div>
+    <form onSubmit={submit}>
+      <div className="mb-3">
+        <label className="form-label">Policy Number</label>
+        <input className="form-control" value={form.policyNumber} onChange={set("policyNumber")} />
+        {errors.policyNumber && <small className="text-danger">{errors.policyNumber}</small>}
+      </div>
+
+      <div className="mb-3">
+        <label className="form-label">Incident Date</label>
+        <input type="date" className="form-control" value={form.incidentDate} onChange={set("incidentDate")} />
+        {errors.incidentDate && <small className="text-danger">{errors.incidentDate}</small>}
+      </div>
+
+      <div className="mb-3">
+        <label className="form-label">Claim Type</label>
+        <select className="form-select" value={form.claimType} onChange={set("claimType")}>
+          <option value="">Select…</option>
+          {["Motor","Home","Health","Other"].map((t) => (
+            <option key={t} value={t}>{t}</option>
+          ))}
+        </select>
+        {errors.claimType && <small className="text-danger">{errors.claimType}</small>}
+      </div>
+
+      <div className="mb-3">
+        <label className="form-label">Description</label>
+        <textarea rows={5} className="form-control" value={form.description} onChange={set("description")} />
+        {errors.description && <small className="text-danger">{errors.description}</small>}
+      </div>
+
+      <button className="btn btn-primary" type="submit" disabled={submitting}>
+        {submitting ? "Creating…" : "Create Claim"}
+      </button>
+    </form>
   );
 }

@@ -15,4 +15,8 @@ router.post('/', createClaimRules, validate, ctrl.createClaim);
 // List mine
 router.get('/', ctrl.listMyClaims);
 
+// DETAIL (ownership enforced)
+router.get('/:id', idParamRule, validate, ownsClaim(Claim), ctrl.getMyClaim);
+
+
 module.exports = router;
