@@ -22,3 +22,9 @@ exports.listMyClaims = async (req, res, next) => {
     res.json(rows);
   } catch (e) { next(e); }
 };
+
+// get a single claim (ownership enforced by middleware)
+exports.getMyClaim = async (req, res) => {
+  // `ownsClaim` middleware will have attached the doc to req.claim
+  res.json(req.claim);
+};
