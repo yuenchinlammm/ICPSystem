@@ -28,3 +28,18 @@ exports.getMyClaim = async (req, res) => {
   // `ownsClaim` middleware will have attached the doc to req.claim
   res.json(req.claim);
 };
+
+exports.submitClaim = async (req, res, next) => {
+  try {
+    const claim = req.claim; // set by ownsClaim middleware
+    if (claim.status !== 'Draft') {
+      return res.status(400).json({ message: 'Only Draft claims can be submitted' });
+    }
+    claim.status = 'Pending';
+    claim.submittedAt = new Date();
+    await claim.save();
+    res.json(claim);
+  } catch (e) {
+    next(e);
+  }
+};

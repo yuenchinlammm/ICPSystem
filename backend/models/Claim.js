@@ -5,7 +5,7 @@ const ClaimSchema = new mongoose.Schema({
   incidentDate: { type: Date, required: true },
   claimType: { type: String, enum: ['Motor','Home','Health','Other'], required: true },
   description: { type: String, required: true },
-  status: { type: String, enum: ['Draft','Pending','Under Review','Approved','Rejected'], default: 'Draft' }
-}, { timestamps: true });
+  status: { type: String, enum: ['Draft','Pending','Under Review','Approved','Rejected'], default: 'Draft' },
+  submittedAt: {type: Date }, }, { timestamps: true });
 
 module.exports = mongoose.model('Claim', ClaimSchema);

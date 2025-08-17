@@ -6,6 +6,8 @@ const { ownsClaim } = require('../middleware/ownership');
 const Claim = require('../models/Claim');
 const ctrl = require('../controllers/claimController');
 const requireAuth = require('../middleware/authMiddleware');
+const { allowDraftOnly } = require('../middlewares/statusGuard');
+const { requireAtLeastOneDocument } = require('../middlewares/attachments');
 
 router.use(requireAuth);
 
@@ -18,5 +20,15 @@ router.get('/', ctrl.listMyClaims);
 // DETAIL (ownership enforced)
 router.get('/:id', idParamRule, validate, ownsClaim(Claim), ctrl.getMyClaim);
 
+// Submit a Draft claim for review
+router.post(
+  '/:id/submit',
+  idParamRule,
+  validate,
+  ownsClaim(Claim),
+  allowDraftOnly,
+  requireAtLeastOneDocument,
+  ctrl.submitClaim
+);
 
 module.exports = router;
