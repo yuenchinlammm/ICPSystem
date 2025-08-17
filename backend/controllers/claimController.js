@@ -43,3 +43,33 @@ exports.submitClaim = async (req, res, next) => {
     next(e);
   }
 };
+
+// UPDATE my draft claim
+exports.updateMyClaim = async (req, res, next) => {
+  try {
+    const claim = req.claim; // set by ownsClaim
+    // enforce Draft-only here (route also guards it)
+    if (claim.status !== 'Draft') {
+      return res.status(400).json({ message: 'Only Draft claims can be edited' });
+    }
+    const fields = ['policyNumber', 'incidentDate', 'claimType', 'description'];
+    fields.forEach(f => {
+      if (req.body[f] !== undefined) claim[f] = req.body[f];
+    });
+    await claim.save();
+    res.json(claim);
+  } catch (e) { next(e); }
+};
+
+// DELETE my draft claim
+exports.deleteMyClaim = async (req, res, next) => {
+  try {
+    const claim = req.claim; // set by ownsClaim
+    if (claim.status !== 'Draft') {
+      return res.status(400).json({ message: 'Only Draft claims can be deleted' });
+    }
+    await claim.deleteOne();
+    res.status(204).end();
+  } catch (e) { next(e); }
+};
+

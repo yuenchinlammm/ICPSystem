@@ -6,8 +6,9 @@ const { ownsClaim } = require('../middleware/ownership');
 const Claim = require('../models/Claim');
 const ctrl = require('../controllers/claimController');
 const requireAuth = require('../middleware/authMiddleware');
-const { allowDraftOnly } = require('../middlewares/statusGuard');
-const { requireAtLeastOneDocument } = require('../middlewares/attachments');
+const { allowDraftOnly } = require('../middleware/statusGuard');
+const { requireAtLeastOneDocument } = require('../middleware/attachments');
+const { updateClaimRules, idParamRule } = require('../validators/claim.validator');
 
 router.use(requireAuth);
 
@@ -29,6 +30,24 @@ router.post(
   allowDraftOnly,
   requireAtLeastOneDocument,
   ctrl.submitClaim
+);
+// UPDATE Draft claim
+router.put('/:id',
+  idParamRule,
+  updateClaimRules,
+  validate,
+  ownsClaim(Claim),
+  allowDraftOnly,
+  ctrl.updateMyClaim
+);
+
+// DELETE Draft claim
+router.delete('/:id',
+  idParamRule,
+  validate,
+  ownsClaim(Claim),
+  allowDraftOnly,
+  ctrl.deleteMyClaim
 );
 
 module.exports = router;
