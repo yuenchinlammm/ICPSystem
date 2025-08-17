@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const Document = require('../models/Document');
+const mime = require('mime-types');
 
 exports.uploadDocument = async (req, res, next) => {
   try {
@@ -33,5 +34,33 @@ exports.deleteDocument = async (req, res, next) => {
     if (fs.existsSync(doc.path)) fs.unlinkSync(doc.path);
     await doc.deleteOne();
     res.status(204).end();
+  } catch (e) { next(e); }
+};
+
+exports.previewDocument = async (req, res, next) => {
+  try {
+    const doc = req.document; // set by ownsDocument
+    if (!doc || !doc.path || !fs.existsSync(doc.path)) {
+      return res.status(404).json({ message: 'File not found' });
+    }
+    const type = doc.mimetype || mime.lookup(doc.filename) || 'application/octet-stream';
+    res.setHeader('Content-Type', type);
+    // inline preview (PDF/images display in browser)
+    res.setHeader('Content-Disposition', `inline; filename="${path.basename(doc.filename)}"`);
+    fs.createReadStream(doc.path).pipe(res);
+  } catch (e) { next(e); }
+};
+
+exports.downloadDocument = async (req, res, next) => {
+  try {
+    const doc = req.document;
+    if (!doc || !doc.path || !fs.existsSync(doc.path)) {
+      return res.status(404).json({ message: 'File not found' });
+    }
+    const type = doc.mimetype || mime.lookup(doc.filename) || 'application/octet-stream';
+    res.setHeader('Content-Type', type);
+    // attachment forces save dialog
+    res.setHeader('Content-Disposition', `attachment; filename="${path.basename(doc.filename)}"`);
+    fs.createReadStream(doc.path).pipe(res);
   } catch (e) { next(e); }
 };

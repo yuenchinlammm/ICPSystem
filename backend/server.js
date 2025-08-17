@@ -15,6 +15,13 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.get('/health', (req, res) => res.json({ ok: true }));
 app.use('/api/claims', require('./routes/claim.routes'));
 app.use('/api',        require('./routes/document.routes'));
+app.use((req,res)=>res.status(404).json({ message:'Not found' }));
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  console.error(err);
+  if (res.headersSent) return next(err);
+  res.status(err.status || 500).json({ message: err.message || 'Server error' });
+});
 //app.use('/api/tasks', require('./routes/taskRoutes'));
 
 // Export the app object for testing
