@@ -29,5 +29,11 @@ router.delete('/documents/:docId',
   ownsDocument(), // checks ownership
   ctrl.deleteDocument
 );
+// Preview (inline)
+router.get('/documents/:docId/preview', ownsDocument(), ctrl.previewDocument);
+
+// Download (attachment)
+router.get('/documents/:docId/download', ownsDocument(), ctrl.downloadDocument);
+
 
 module.exports = router;
