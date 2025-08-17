@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { submitClaim } from "../../api/claim";
 
 export default function ClaimDetail({ claimId, onBack }) {
   const [claim, setClaim] = useState(null);
   const [err, setErr] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (!claimId) return;
@@ -32,6 +34,26 @@ export default function ClaimDetail({ claimId, onBack }) {
       <p><b>Incident Date:</b> {claim.incidentDate?.slice(0,10)}</p>
       <p><b>Status:</b> {claim.status}</p>
       <p><b>Description:</b> {claim.description}</p>
+       {claim.status === 'Draft' && (
+        <button
+          className="btn btn-success"
+          disabled={submitting}
+          onClick={async () => {
+            try {
+              setSubmitting(true);
+              const { data } = await submitClaim(claim._id);
+              setClaim(data); // updates status to Pending after success
+            } catch (e) {
+              const msg = e.response?.data?.message || e.message;
+              alert(`Submit failed: ${msg}`);
+            } finally {
+              setSubmitting(false);
+            }
+          }}
+        >
+          {submitting ? 'Submitting…' : 'Submit for review'}
+        </button>
+      )}
     </div>
   );
 }
