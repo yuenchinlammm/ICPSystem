@@ -1,0 +1,37 @@
+const fs = require('fs');
+const path = require('path');
+const Document = require('../models/Document');
+
+exports.uploadDocument = async (req, res, next) => {
+  try {
+    // multer populated req.file
+    const file = req.file;
+    if (!file) return res.status(400).json({ message: 'No file uploaded' });
+
+    const doc = await Document.create({
+      claimId: req.params.id,
+      userId:  req.user.id,
+      filename: file.originalname,
+      mimetype: file.mimetype,
+      size:     file.size,
+      path:     file.path
+    });
+    res.status(201).json(doc);
+  } catch (e) { next(e); }
+};
+
+exports.listDocuments = async (req, res, next) => {
+  try {
+    const rows = await Document.find({ claimId: req.params.id }).sort({ createdAt: -1 });
+    res.json(rows);
+  } catch (e) { next(e); }
+};
+
+exports.deleteDocument = async (req, res, next) => {
+  try {
+    const doc = req.document; // set by ownsDocument
+    if (fs.existsSync(doc.path)) fs.unlinkSync(doc.path);
+    await doc.deleteOne();
+    res.status(204).end();
+  } catch (e) { next(e); }
+};
